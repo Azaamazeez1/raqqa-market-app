@@ -184,19 +184,22 @@ const AdminUserDetailScreen: React.FC = () => {
 
     const conversations = useMemo(() => {
         if (!userId) return {};
-        return messages.reduce<ConversationMap>((acc, msg) => {
+        // FIX: Replaced `reduce` with a standard `for...of` loop to avoid TypeScript type inference issues.
+        // The previous implementation with `reduce` was causing the accumulator's type to be inferred as `unknown`.
+        const conversationsMap: ConversationMap = {};
+        for (const msg of messages) {
             const otherParticipantId = msg.sender_id === userId ? msg.receiver_id : msg.sender_id;
             const otherParticipantProfile = msg.sender_id === userId ? msg.receiver : msg.sender;
             
-            if (!acc[otherParticipantId]) {
-                acc[otherParticipantId] = {
+            if (!conversationsMap[otherParticipantId]) {
+                conversationsMap[otherParticipantId] = {
                     profile: otherParticipantProfile,
                     messages: [],
                 };
             }
-            acc[otherParticipantId].messages.push(msg);
-            return acc;
-        }, {});
+            conversationsMap[otherParticipantId].messages.push(msg);
+        }
+        return conversationsMap;
     }, [messages, userId]);
     
     const filteredActivity = useMemo(() => {
